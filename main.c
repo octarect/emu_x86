@@ -6,6 +6,9 @@
 /* メモリ1MB */
 #define MEMORY_SIZE (1024 * 1024)
 
+/* プログラム開始アドレス */
+#define PROGRAM_ORIGIN (0x7c00)
+
 enum Register { EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI, REGISTERS_COUNT };
 char* registers_name[] = {
   "EAX", "ECX", "EDX", "EBX", "ESP", "EBP", "ESI", "EDI"
@@ -80,6 +83,11 @@ uint32_t get_code32(Emulator* emu, int index)
   return ret;
 }
 
+uint32_t get_sign_code32(Emulator* emu, int index)
+{
+  return (int32_t)get_code32(emu, index);
+}
+
 /* MOV命令(オペコード・レジスタ決定型) */
 void mov_r32_imm32(Emulator* emu)
 {
@@ -97,6 +105,13 @@ void short_jump(Emulator* emu)
   emu->eip += (diff + 2);
 }
 
+/* JMP命令(ニアジャンプ) */
+void near_jump(Emulator* emu)
+{
+  int32_t diff = get_sign_code32(emu, 1);
+  emu->eip += (diff + 5);
+}
+
 /* 関数ポインタテーブル */
 typedef void instruction_func_t(Emulator*);
 instruction_func_t* instructions[256];
@@ -107,6 +122,7 @@ void init_instructions(void)
   for (i = 0; i < 8; i++) {
     instructions[0xB8 + i] = mov_r32_imm32;
   }
+  instructions[0xE9] = near_jump;
   instructions[0xEB] = short_jump;
 }
 
@@ -120,8 +136,8 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  /* EIPが0, ESPが0x7C00の状態のエミュレータを作る */
-  emu = create_emu(MEMORY_SIZE, 0x0000, 0x7c00);
+  /* エミュレータを作る. EIPとESPも引数にて指定 */
+  emu = create_emu(MEMORY_SIZE, PROGRAM_ORIGIN, 0x7c00);
 
   binary = fopen(argv[1], "rb");
   if (binary == NULL) {
@@ -130,7 +146,7 @@ int main(int argc, char* argv[])
   }
 
   /* 機械語ファイルを読み込む(最大512B) */
-  fread(emu->memory, 1, 0x200, binary);
+  fread(emu->memory + PROGRAM_ORIGIN, 1, 0x200, binary);
   fclose(binary);
 
   init_instructions();
