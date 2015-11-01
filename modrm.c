@@ -37,13 +37,45 @@ void parse_modrm(Emulator* emu, ModRM* modrm)
   }
 }
 
+uint32_t eval_sib(Emulator* emu, ModRM* modrm)
+{
+  uint8_t sib = modrm->sib;
+  uint8_t scale = ((sib & 0xC0) >> 6);
+  uint8_t base  = ((sib & 0x38) >> 3);
+  uint8_t index = (sib & 0x03);
+  uint32_t r32b, r32i;
+
+  if (base == 5) {
+    r32b = 0;
+  } else {
+    r32b = get_register32(emu, base);
+  }
+
+  if (index == 4) {
+    return r32b;
+  } else {
+    r32i = get_register32(emu, index);
+  }
+
+  if (scale == 0) {
+    return r32b;
+  } else if (scale == 1) {
+    return r32b + r32i * 2;
+  } else if (scale == 2) {
+    return r32b + r32i * 4;
+  } else {  /* scale == 3 */
+    return r32b + r32i * 8;
+  }
+}
+
 uint32_t calc_memory_address(Emulator* emu, ModRM* modrm)
 {
   /* レジスタ間接参照型 */
   if (modrm->mod == 0) {
     if (modrm->rm == 4) {
-      printf("not implemented ModRM mod = 0, rm = 4\n");
-      exit(0);
+      // printf("not implemented ModRM mod = 0, rm = 4\n");
+      // exit(0);
+      return eval_sib(emu, modrm);
     } else if (modrm->mod == 5) {
       return modrm->disp32;
     } else {
@@ -52,16 +84,18 @@ uint32_t calc_memory_address(Emulator* emu, ModRM* modrm)
   /* レジスタ間接参照 + 8bitディスプレースメント型 */
   } else if (modrm->mod == 1) {
     if (modrm->rm == 4) {
-      printf("not implemented ModRM mod = 1, rm = 4\n");
-      exit(0);
+      // printf("not implemented ModRM mod = 1, rm = 4\n");
+      // exit(0);
+      return eval_sib(emu, modrm) + modrm->disp8;
     } else {
       return get_register32(emu, modrm->rm) + modrm->disp8;
     }
   /* レジスタ間接参照 + 32bitディスプレースメント型 */
   } else if (modrm->mod == 2) {
     if (modrm->rm == 4) {
-      printf("not implemented ModRM mod = 2, rm = 4\n");
-      exit(0);
+      // printf("not implemented ModRM mod = 2, rm = 4\n");
+      // exit(0);
+      return eval_sib(emu, modrm) + modrm->disp32;
     } else {
       return get_register32(emu, modrm->rm) + modrm->disp32;
     }
