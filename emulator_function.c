@@ -27,3 +27,46 @@ uint32_t get_sign_code32(Emulator* emu, int index)
 {
   return (int32_t)get_code32(emu, index);
 }
+
+uint32_t get_register32(Emulator* emu, int index)
+{
+  return emu->registers[index];
+}
+
+void set_register32(Emulator* emu, int index, uint32_t value)
+{
+  emu->registers[index] = value;
+}
+
+uint32_t get_memory8(Emulator* emu, uint32_t address)
+{
+  return emu->memory[address];
+}
+
+void set_memory8(Emulator* emu, uint32_t address, uint32_t value)
+{
+  emu->memory[address] = value & 0xFF;
+}
+
+uint32_t get_memory32(Emulator* emu, uint32_t address)
+{
+  int i;
+  uint32_t ret = 0;
+
+  /* リトルエンディアンでメモリの値を取得する */
+  for (i = 0; i < 4; i++) {
+    ret |= get_memory8(emu, address + i) << (8 * i);
+  }
+
+  return ret;
+}
+
+void set_memory32(Emulator* emu, uint32_t address, uint32_t value)
+{
+  int i;
+
+  /* リトルエンディアンでメモリの値を設定する */
+  for (i = 0; i < 4; i++) {
+    set_memory8(emu, address + i, value >> (i * 8));
+  }
+}
