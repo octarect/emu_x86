@@ -68,6 +68,16 @@ static void sub_rm32_imm8(Emulator* emu, ModRM* modrm)
   set_rm32(emu, modrm, rm32 - imm8);
 }
 
+/* SUB命令(0x29 /r) */
+static void sub_rm32_r32(Emulator* emu)
+{
+  emu->eip += 1;
+  ModRM modrm;
+  parse_modrm(emu, &modrm);
+  uint32_t rm32 = get_rm32(emu, &modrm);
+  uint32_t r32 = get_r32(emu, &modrm);
+  set_rm32(emu, &modrm, rm32 - r32);
+}
 
 /* オペコード83 */
 static void code_83(Emulator* emu)
@@ -107,6 +117,7 @@ void init_instructions(void)
   int i;
   memset(instructions, 0, sizeof(instructions));
   instructions[0x01] = add_rm32_r32;
+  instructions[0x29] = sub_rm32_r32;
   instructions[0x83] = code_83;
   instructions[0x89] = mov_rm32_r32;
   instructions[0x8B] = mov_r32_rm32;
