@@ -9,7 +9,7 @@
 
 instruction_func_t* instructions[256];
 
-/* MOV命令(オペコード・レジスタ決定型) */
+/* MOV命令 */
 static void mov_r32_imm32(Emulator* emu)
 {
   uint8_t reg = get_code8(emu, 0) - 0xB8;
@@ -46,6 +46,17 @@ static void mov_r32_rm32(Emulator* emu)
   set_r32(emu, &modrm, rm32);
 }
 
+/* ADD命令 */
+static void add_rm32_r32(Emulator* emu)
+{
+  emu->eip += 1;
+  ModRM modrm;
+  parse_modrm(emu, &modrm);
+  uint32_t r32 = get_r32(emu, &modrm);
+  uint32_t rm32 = get_rm32(emu, &modrm);
+  set_rm32(emu, &modrm, rm32 + r32);
+}
+
 /* JMP命令(ショートジャンプ) */
 static void short_jump(Emulator* emu)
 {
@@ -66,6 +77,7 @@ void init_instructions(void)
 {
   int i;
   memset(instructions, 0, sizeof(instructions));
+  instructions[0x01] = add_rm32_r32;
   instructions[0x89] = mov_rm32_r32;
   instructions[0x8B] = mov_r32_rm32;
   for (i = 0; i < 8; i++) {
