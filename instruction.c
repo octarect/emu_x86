@@ -1,3 +1,5 @@
+#include <stdio.h>
+#include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -57,6 +59,33 @@ static void add_rm32_r32(Emulator* emu)
   set_rm32(emu, &modrm, rm32 + r32);
 }
 
+/* SUB命令(オペコード83の拡張) */
+static void sub_rm32_imm8(Emulator* emu, ModRM* modrm)
+{
+  uint32_t rm32 = get_rm32(emu, modrm);
+  uint32_t imm8 = (int32_t)get_sign_code8(emu, 0);
+  emu->eip += 1;
+  set_rm32(emu, modrm, rm32 - imm8);
+}
+
+
+/* オペコード83 */
+static void code_83(Emulator* emu)
+{
+  emu->eip += 1;
+  ModRM modrm;
+  parse_modrm(emu, &modrm);
+
+  switch (modrm.opecode) {
+    case 5:
+      sub_rm32_imm8(emu, &modrm);
+      break;
+    default:
+      printf("not implemented: 83 /%d\n", modrm.opecode);
+      exit(1);
+  }
+}
+
 /* JMP命令(ショートジャンプ) */
 static void short_jump(Emulator* emu)
 {
@@ -78,6 +107,7 @@ void init_instructions(void)
   int i;
   memset(instructions, 0, sizeof(instructions));
   instructions[0x01] = add_rm32_r32;
+  instructions[0x83] = code_83;
   instructions[0x89] = mov_rm32_r32;
   instructions[0x8B] = mov_r32_rm32;
   for (i = 0; i < 8; i++) {
