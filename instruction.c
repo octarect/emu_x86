@@ -118,6 +118,13 @@ static void inc_rm32(Emulator* emu, ModRM* modrm)
   set_rm32(emu, modrm, value + 1);
 }
 
+/* DEC命令*/
+static void dec_rm32(Emulator* emu, ModRM* modrm)
+{
+  uint32_t value = get_rm32(emu, modrm);
+  set_rm32(emu, modrm, value - 1);
+}
+
 static void code_ff(Emulator* emu)
 {
   emu->eip += 1;
@@ -127,6 +134,9 @@ static void code_ff(Emulator* emu)
   switch (modrm.opecode) {
     case 0:
       inc_rm32(emu, &modrm);
+      break;
+    case 1:
+      dec_rm32(emu, &modrm);
       break;
     default:
       printf("not implemented: FF /%d\n", modrm.opecode);

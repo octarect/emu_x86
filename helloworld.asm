@@ -9,4 +9,7 @@ start:
   mov esi, [ebp+4]
   inc dword [ebp+4]
   mov edi, [ebp+4]
+  dec dword [ebp+4]
+  dec dword [ebp+4]
+  mov ecx, [ebp+4]
   jmp 0
