@@ -111,6 +111,30 @@ static void near_jump(Emulator* emu)
   emu->eip += (diff + 5);
 }
 
+/* INC命令 */
+static void inc_rm32(Emulator* emu, ModRM* modrm)
+{
+  uint32_t value = get_rm32(emu, modrm);
+  set_rm32(emu, modrm, value + 1);
+}
+
+static void code_ff(Emulator* emu)
+{
+  emu->eip += 1;
+  ModRM modrm;
+  parse_modrm(emu, &modrm);
+
+  switch (modrm.opecode) {
+    case 0:
+      inc_rm32(emu, &modrm);
+      break;
+    default:
+      printf("not implemented: FF /%d\n", modrm.opecode);
+      exit(1);
+  }
+}
+
+
 /* 関数ポインタテーブル */
 void init_instructions(void)
 {
@@ -127,4 +151,5 @@ void init_instructions(void)
   instructions[0xC7] = mov_rm32_imm32;
   instructions[0xE9] = near_jump;
   instructions[0xEB] = short_jump;
+  instructions[0xFF] = code_ff;
 }
