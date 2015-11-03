@@ -159,6 +159,14 @@ static void ret(Emulator* emu)
   emu->eip = pop32(emu);
 }
 
+/* LEAVE命令 */
+static void leave(Emulator* emu) {
+  uint32_t ebp = get_register32(emu, EBP);
+  set_register32(emu, ESP, ebp);
+  set_register32(emu, EBP, pop32(emu));
+  emu->eip += 1;
+}
+
 /* JMP命令(ショートジャンプ) */
 static void short_jump(Emulator* emu)
 {
@@ -195,6 +203,7 @@ void init_instructions(void)
   }
   instructions[0xC3] = ret;
   instructions[0xC7] = mov_rm32_imm32;
+  instructions[0xC9] = leave;
   instructions[0xE8] = call_rel32;
   instructions[0xE9] = near_jump;
   instructions[0xEB] = short_jump;
