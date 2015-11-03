@@ -20,13 +20,13 @@ char* registers_name[] = {
 /* 汎用レジスタとプログラムカウンタの値を標準出力に出力する */
 static void dump_registers(Emulator* emu)
 {
-    int i;
+  int i;
 
-    for (i = 0; i < REGISTERS_COUNT; i++) {
-      printf("%s = %08x\n", registers_name[i], emu->registers[i]);
-    }
+  for (i = 0; i < REGISTERS_COUNT; i++) {
+    printf("%s = %08x\n", registers_name[i], emu->registers[i]);
+  }
 
-    printf("EIP = %08x\n", emu->eip);
+  printf("EIP = %08x\n", emu->eip);
 }
 
 /* エミュレータを作成する */
