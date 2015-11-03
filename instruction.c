@@ -96,21 +96,6 @@ static void code_83(Emulator* emu)
   }
 }
 
-/* JMP命令(ショートジャンプ) */
-static void short_jump(Emulator* emu)
-{
-  int8_t diff = get_sign_code8(emu, 1);
-  /* eipに足しこむ．2はjmp命令分 */
-  emu->eip += (diff + 2);
-}
-
-/* JMP命令(ニアジャンプ) */
-static void near_jump(Emulator* emu)
-{
-  int32_t diff = get_sign_code32(emu, 1);
-  emu->eip += (diff + 5);
-}
-
 /* INC命令 */
 static void inc_rm32(Emulator* emu, ModRM* modrm)
 {
@@ -160,6 +145,35 @@ static void pop_r32(Emulator* emu)
   emu->eip += 1;
 }
 
+/* CALL命令 */
+static void call_rel32(Emulator* emu)
+{
+  int32_t diff = get_sign_code32(emu, 1);
+  push32(emu, emu->eip + 5);
+  emu->eip += (diff + 5);
+}
+
+/* RET命令 */
+static void ret(Emulator* emu)
+{
+  emu->eip = pop32(emu);
+}
+
+/* JMP命令(ショートジャンプ) */
+static void short_jump(Emulator* emu)
+{
+  int8_t diff = get_sign_code8(emu, 1);
+  /* eipに足しこむ．2はjmp命令分 */
+  emu->eip += (diff + 2);
+}
+
+/* JMP命令(ニアジャンプ) */
+static void near_jump(Emulator* emu)
+{
+  int32_t diff = get_sign_code32(emu, 1);
+  emu->eip += (diff + 5);
+}
+
 /* 関数ポインタテーブル */
 void init_instructions(void)
 {
@@ -179,7 +193,9 @@ void init_instructions(void)
   for (i = 0; i < 8; i++) {
     instructions[0xB8 + i] = mov_r32_imm32;
   }
+  instructions[0xC3] = ret;
   instructions[0xC7] = mov_rm32_imm32;
+  instructions[0xE8] = call_rel32;
   instructions[0xE9] = near_jump;
   instructions[0xEB] = short_jump;
   instructions[0xFF] = code_ff;
