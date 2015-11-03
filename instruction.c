@@ -144,6 +144,21 @@ static void code_ff(Emulator* emu)
   }
 }
 
+/* PUSH命令(0x50 + レジスタ番号) */
+static void push_r32(Emulator* emu)
+{
+  uint8_t reg = get_code8(emu, 0) - 0x50;
+  push32(emu, get_register32(emu, reg));
+  emu->eip += 1;
+}
+
+/* POP命令(0x58 + レジスタ番号) */
+static void pop_r32(Emulator* emu)
+{
+  uint8_t reg = get_code8(emu, 0) - 0x58;
+  set_register32(emu, reg, pop32(emu));
+  emu->eip += 1;
+}
 
 /* 関数ポインタテーブル */
 void init_instructions(void)
@@ -152,6 +167,12 @@ void init_instructions(void)
   memset(instructions, 0, sizeof(instructions));
   instructions[0x01] = add_rm32_r32;
   instructions[0x29] = sub_rm32_r32;
+  for (i = 0; i < 8; i++) {
+    instructions[0x50 + i] = push_r32;
+  }
+  for (i = 0; i < 8; i++) {
+    instructions[0x58 + i] = pop_r32;
+  }
   instructions[0x83] = code_83;
   instructions[0x89] = mov_rm32_r32;
   instructions[0x8B] = mov_r32_rm32;
