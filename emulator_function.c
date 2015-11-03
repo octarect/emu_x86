@@ -83,4 +83,6 @@ uint32_t pop32(Emulator* emu)
   uint32_t address = get_register32(emu, ESP);
   uint32_t ret = get_memory32(emu, address);
   set_register32(emu, ESP, address + 4);
+
+  return ret;
 }
