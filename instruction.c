@@ -59,7 +59,16 @@ static void add_rm32_r32(Emulator* emu)
   set_rm32(emu, &modrm, rm32 + r32);
 }
 
-/* SUB命令(オペコード83の拡張) */
+/* ADD命令(0x83 /0) */
+static void add_rm32_imm8(Emulator* emu, ModRM* modrm)
+{
+  uint32_t rm32 = get_rm32(emu, modrm);
+  uint32_t imm8 = (int32_t)get_sign_code8(emu, 0);
+  emu->eip += 1;
+  set_rm32(emu, modrm, rm32 + imm8);
+}
+
+/* SUB命令(0x83 /5) */
 static void sub_rm32_imm8(Emulator* emu, ModRM* modrm)
 {
   uint32_t rm32 = get_rm32(emu, modrm);
@@ -87,6 +96,9 @@ static void code_83(Emulator* emu)
   parse_modrm(emu, &modrm);
 
   switch (modrm.opecode) {
+    case 0:
+      add_rm32_imm8(emu, &modrm);
+      break;
     case 5:
       sub_rm32_imm8(emu, &modrm);
       break;
