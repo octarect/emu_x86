@@ -122,31 +122,26 @@ static void dec_rm32(Emulator* emu, ModRM* modrm)
   set_rm32(emu, modrm, value - 1);
 }
 
-static void code_ff(Emulator* emu)
-{
-  emu->eip += 1;
-  ModRM modrm;
-  parse_modrm(emu, &modrm);
-
-  switch (modrm.opecode) {
-    case 0:
-      inc_rm32(emu, &modrm);
-      break;
-    case 1:
-      dec_rm32(emu, &modrm);
-      break;
-    default:
-      printf("not implemented: FF /%d\n", modrm.opecode);
-      exit(1);
-  }
-}
-
 /* PUSH命令(0x50 + レジスタ番号) */
 static void push_r32(Emulator* emu)
 {
   uint8_t reg = get_code8(emu, 0) - 0x50;
   push32(emu, get_register32(emu, reg));
   emu->eip += 1;
+}
+
+static void push_imm8(Emulator* emu)
+{
+  uint8_t value = get_code8(emu, 1);
+  push32(emu, value);
+  emu->eip += 2;
+}
+
+/* PUSH命令(0xFF /6) ver3.7時点自己実装 */
+static void push_rm32(Emulator* emu, ModRM* modrm)
+{
+  uint32_t rm32 = get_rm32(emu, modrm);
+  push32(emu, rm32);
 }
 
 /* POP命令(0x58 + レジスタ番号) */
@@ -194,6 +189,28 @@ static void near_jump(Emulator* emu)
   emu->eip += (diff + 5);
 }
 
+static void code_ff(Emulator* emu)
+{
+  emu->eip += 1;
+  ModRM modrm;
+  parse_modrm(emu, &modrm);
+
+  switch (modrm.opecode) {
+    case 0:
+      inc_rm32(emu, &modrm);
+      break;
+    case 1:
+      dec_rm32(emu, &modrm);
+      break;
+    case 6:
+      push_rm32(emu, &modrm);
+      break;
+    default:
+      printf("not implemented: FF /%d\n", modrm.opecode);
+      exit(1);
+  }
+}
+
 /* 関数ポインタテーブル */
 void init_instructions(void)
 {
@@ -207,6 +224,7 @@ void init_instructions(void)
   for (i = 0; i < 8; i++) {
     instructions[0x58 + i] = pop_r32;
   }
+  instructions[0x6A] = push_imm8;
   instructions[0x83] = code_83;
   instructions[0x89] = mov_rm32_r32;
   instructions[0x8B] = mov_r32_rm32;
