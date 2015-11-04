@@ -278,6 +278,11 @@ static void code_ff(Emulator* emu)
   }
 }
 
+static void nop(Emulator* emu)
+{
+  emu->eip += 1;
+}
+
 /* 関数ポインタテーブル */
 void init_instructions(void)
 {
@@ -313,6 +318,8 @@ void init_instructions(void)
   instructions[0x83] = code_83;
   instructions[0x89] = mov_rm32_r32;
   instructions[0x8B] = mov_r32_rm32;
+
+  instructions[0x90] = nop;
 
   for (i = 0; i < 8; i++) {
     instructions[0xB8 + i] = mov_r32_imm32;
