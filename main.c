@@ -13,6 +13,9 @@
 /* プログラム開始アドレス */
 #define PROGRAM_ORIGIN (0x7c00)
 
+/* スタック開始アドレス */
+#define STACK_BASE (0x7c00)
+
 char* registers_name[] = {
   "EAX", "ECX", "EDX", "EBX", "ESP", "EBP", "ESI", "EDI"
 };
@@ -22,11 +25,22 @@ static void dump_registers(Emulator* emu)
 {
   int i;
 
+  printf("[REGISTERS]\n");
   for (i = 0; i < REGISTERS_COUNT; i++) {
     printf("%s = %08x\n", registers_name[i], emu->registers[i]);
   }
 
   printf("EIP = %08x\n", emu->eip);
+}
+
+static void dump_stack(Emulator* emu)
+{
+  uint32_t sp = emu->registers[ESP];
+
+  printf("[STACK]\n");
+  for (; sp < STACK_BASE; sp = sp + 0x04) {
+    printf("%x: %08x\n", sp, emu->memory[sp]);
+  }
 }
 
 /* エミュレータを作成する */
@@ -63,7 +77,7 @@ int main(int argc, char* argv[])
   }
 
   /* エミュレータを作る. EIPとESPも引数にて指定 */
-  emu = create_emu(MEMORY_SIZE, PROGRAM_ORIGIN, 0x7c00);
+  emu = create_emu(MEMORY_SIZE, PROGRAM_ORIGIN, STACK_BASE);
 
   binary = fopen(argv[1], "rb");
   if (binary == NULL) {
@@ -97,6 +111,7 @@ int main(int argc, char* argv[])
     }
   }
 
+  dump_stack(emu);
   dump_registers(emu);
   destroy_emu(emu);
 
