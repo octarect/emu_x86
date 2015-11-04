@@ -32,6 +32,13 @@ test37_args: test37_args.o test37_crt0.o
 test37_args.o: test/test37_args.c
 	cc -nostdlib -fno-asynchronous-unwind-tables -fno-stack-protector -m32 -o test37_args.o -c test/test37_args.c
 
+test310: test310.o test37_crt0.o
+	ld --entry=start --oformat=binary -Ttext 0x7c00 -m elf_i386 -o $(binary_name) test37_crt0.o test310.o
+	rm test310.o test37_crt0.o
+test310.o: test/test310.c
+	cc -nostdlib -fno-asynchronous-unwind-tables -fno-stack-protector -m32 -o test310.o -c test/test310.c
+
+
 
 clean:
 	rm px86
