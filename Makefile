@@ -26,6 +26,13 @@ test37_main.o: test/test37_main.c
 test37_crt0.o: test/test37_crt0.asm
 	nasm -f elf -o test37_crt0.o test/test37_crt0.asm
 
+test37_args: test37_args.o test37_crt0.o
+	ld --entry=start --oformat=binary -Ttext 0x7c00 -m elf_i386 -o $(binary_name) test37_crt0.o test37_args.o
+	rm test37_args.o test37_crt0.o
+test37_args.o: test/test37_args.c
+	cc -nostdlib -fno-asynchronous-unwind-tables -fno-stack-protector -m32 -o test37_args.o -c test/test37_args.c
+
+
 clean:
 	rm px86
 	rm $(binary_name)
