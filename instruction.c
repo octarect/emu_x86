@@ -11,44 +11,7 @@
 
 instruction_func_t* instructions[256];
 
-/* MOV命令 */
-static void mov_r32_imm32(Emulator* emu)
-{
-  uint8_t reg = get_code8(emu, 0) - 0xB8;
-  uint32_t value = get_code32(emu, 1);
-  emu->registers[reg] = value;
-  emu->eip += 5;
-}
-
-static void mov_rm32_imm32(Emulator* emu)
-{
-  emu->eip += 1;
-  ModRM modrm;
-  parse_modrm(emu, &modrm);
-  uint32_t value = get_code32(emu, 0);
-  emu->eip += 4;
-  set_rm32(emu, &modrm, value);
-}
-
-static void mov_rm32_r32(Emulator* emu)
-{
-  emu->eip += 1;
-  ModRM modrm;
-  parse_modrm(emu, &modrm);
-  uint32_t r32 = get_r32(emu, &modrm);
-  set_rm32(emu, &modrm, r32);
-}
-
-static void mov_r32_rm32(Emulator* emu)
-{
-  emu->eip += 1;
-  ModRM modrm;
-  parse_modrm(emu, &modrm);
-  uint32_t rm32 = get_rm32(emu, &modrm);
-  set_r32(emu, &modrm, rm32);
-}
-
-/* ADD命令 */
+/* 0x01 */
 static void add_rm32_r32(Emulator* emu)
 {
   emu->eip += 1;
@@ -59,27 +22,7 @@ static void add_rm32_r32(Emulator* emu)
   set_rm32(emu, &modrm, rm32 + r32);
 }
 
-/* ADD命令(0x83 /0) */
-static void add_rm32_imm8(Emulator* emu, ModRM* modrm)
-{
-  uint32_t rm32 = get_rm32(emu, modrm);
-  uint32_t imm8 = (int32_t)get_sign_code8(emu, 0);
-  emu->eip += 1;
-  set_rm32(emu, modrm, rm32 + imm8);
-}
-
-/* SUB命令(0x83 /5) */
-static void sub_rm32_imm8(Emulator* emu, ModRM* modrm)
-{
-  uint32_t rm32 = get_rm32(emu, modrm);
-  uint32_t imm8 = (int32_t)get_sign_code8(emu, 0);
-  emu->eip += 1;
-  uint64_t result = (uint64_t)rm32 - (uint64_t)imm8;
-  set_rm32(emu, modrm, rm32 - imm8);
-  update_eflags_sub(emu, rm32, imm8, result);
-}
-
-/* SUB命令(0x29 /r) */
+/* 0x29 */
 static void sub_rm32_r32(Emulator* emu)
 {
   emu->eip += 1;
@@ -90,115 +33,7 @@ static void sub_rm32_r32(Emulator* emu)
   set_rm32(emu, &modrm, rm32 - r32);
 }
 
-/* CMP命令(0x83 /7) */
-static void cmp_rm32_imm8(Emulator* emu, ModRM* modrm)
-{
-  uint32_t rm32 = get_rm32(emu, modrm);
-  uint32_t imm8 = (int32_t)get_sign_code8(emu, 0);
-  emu->eip += 1;
-  uint64_t result = (uint64_t)rm32 - (uint64_t)imm8;
-  update_eflags_sub(emu, rm32, imm8, result);
-}
-
-/* オペコード83 */
-static void code_83(Emulator* emu)
-{
-  emu->eip += 1;
-  ModRM modrm;
-  parse_modrm(emu, &modrm);
-
-  switch (modrm.opecode) {
-    case 0:
-      add_rm32_imm8(emu, &modrm);
-      break;
-    case 5:
-      sub_rm32_imm8(emu, &modrm);
-      break;
-    case 7:
-      cmp_rm32_imm8(emu, &modrm);
-      break;
-    default:
-      printf("not implemented: 83 /%d\n", modrm.opecode);
-      exit(1);
-  }
-}
-
-/* INC命令 */
-static void inc_rm32(Emulator* emu, ModRM* modrm)
-{
-  uint32_t value = get_rm32(emu, modrm);
-  set_rm32(emu, modrm, value + 1);
-}
-
-/* DEC命令*/
-static void dec_rm32(Emulator* emu, ModRM* modrm)
-{
-  uint32_t value = get_rm32(emu, modrm);
-  set_rm32(emu, modrm, value - 1);
-}
-
-/* PUSH命令(0x50 + レジスタ番号) */
-static void push_r32(Emulator* emu)
-{
-  uint8_t reg = get_code8(emu, 0) - 0x50;
-  push32(emu, get_register32(emu, reg));
-  emu->eip += 1;
-}
-
-/* PUSH命令(0x68) */
-static void push_imm32(Emulator* emu)
-{
-  uint32_t value = get_code32(emu, 1);
-  push32(emu, value);
-  emu->eip += 5;
-}
-
-/* PUSH命令(0x6A) */
-static void push_imm8(Emulator* emu)
-{
-  uint8_t value = get_code8(emu, 1);
-  push32(emu, value);
-  emu->eip += 2;
-}
-
-/* PUSH命令(0xFF /6) ver3.7時点自己実装 */
-static void push_rm32(Emulator* emu, ModRM* modrm)
-{
-  uint32_t rm32 = get_rm32(emu, modrm);
-  push32(emu, rm32);
-}
-
-/* POP命令(0x58 + レジスタ番号) */
-static void pop_r32(Emulator* emu)
-{
-  uint8_t reg = get_code8(emu, 0) - 0x58;
-  set_register32(emu, reg, pop32(emu));
-  emu->eip += 1;
-}
-
-/* CALL命令 */
-static void call_rel32(Emulator* emu)
-{
-  int32_t diff = get_sign_code32(emu, 1);
-  push32(emu, emu->eip + 5);
-  emu->eip += (diff + 5);
-}
-
-/* RET命令 */
-static void ret(Emulator* emu)
-{
-  emu->eip = pop32(emu);
-}
-
-/* LEAVE命令 */
-static void leave(Emulator* emu) {
-  uint32_t ebp = get_register32(emu, EBP);
-  set_register32(emu, ESP, ebp);
-  set_register32(emu, EBP, pop32(emu));
-  emu->eip += 1;
-}
-
-/* CMP命令(0x3B) */
+/* 0x3B */
 static void cmp_r32_rm32(Emulator* emu)
 {
   emu->eip += 1;
@@ -210,19 +45,36 @@ static void cmp_r32_rm32(Emulator* emu)
   update_eflags_sub(emu, r32, rm32, result);
 }
 
-/* JMP命令(ショートジャンプ) */
-static void short_jump(Emulator* emu)
+/* 0x50 /r */
+static void push_r32(Emulator* emu)
 {
-  int8_t diff = get_sign_code8(emu, 1);
-  /* eipに足しこむ．2はjmp命令分 */
-  emu->eip += (diff + 2);
+  uint8_t reg = get_code8(emu, 0) - 0x50;
+  push32(emu, get_register32(emu, reg));
+  emu->eip += 1;
 }
 
-/* JMP命令(ニアジャンプ) */
-static void near_jump(Emulator* emu)
+/* 0x58 /r */
+static void pop_r32(Emulator* emu)
 {
-  int32_t diff = get_sign_code32(emu, 1);
-  emu->eip += (diff + 5);
+  uint8_t reg = get_code8(emu, 0) - 0x58;
+  set_register32(emu, reg, pop32(emu));
+  emu->eip += 1;
+}
+
+/* 0x68 */
+static void push_imm32(Emulator* emu)
+{
+  uint32_t value = get_code32(emu, 1);
+  push32(emu, value);
+  emu->eip += 5;
+}
+
+/* 0x6A */
+static void push_imm8(Emulator* emu)
+{
+  uint8_t value = get_code8(emu, 1);
+  push32(emu, value);
+  emu->eip += 2;
 }
 
 #define DEFINE_JX(flag, is_flag) \
@@ -256,6 +108,162 @@ static void jle(Emulator* emu)
     emu->eip += (diff + 2);
 }
 
+/* 0x83 /0 */
+static void add_rm32_imm8(Emulator* emu, ModRM* modrm)
+{
+  uint32_t rm32 = get_rm32(emu, modrm);
+  uint32_t imm8 = (int32_t)get_sign_code8(emu, 0);
+  emu->eip += 1;
+  set_rm32(emu, modrm, rm32 + imm8);
+}
+
+/* 0x83 /5 */
+static void sub_rm32_imm8(Emulator* emu, ModRM* modrm)
+{
+  uint32_t rm32 = get_rm32(emu, modrm);
+  uint32_t imm8 = (int32_t)get_sign_code8(emu, 0);
+  emu->eip += 1;
+  uint64_t result = (uint64_t)rm32 - (uint64_t)imm8;
+  set_rm32(emu, modrm, rm32 - imm8);
+  update_eflags_sub(emu, rm32, imm8, result);
+}
+
+/* 0x83 /7 */
+static void cmp_rm32_imm8(Emulator* emu, ModRM* modrm)
+{
+  uint32_t rm32 = get_rm32(emu, modrm);
+  uint32_t imm8 = (int32_t)get_sign_code8(emu, 0);
+  emu->eip += 1;
+  uint64_t result = (uint64_t)rm32 - (uint64_t)imm8;
+  update_eflags_sub(emu, rm32, imm8, result);
+}
+
+static void code_83(Emulator* emu)
+{
+  emu->eip += 1;
+  ModRM modrm;
+  parse_modrm(emu, &modrm);
+
+  switch (modrm.opecode) {
+    case 0:
+      add_rm32_imm8(emu, &modrm);
+      break;
+    case 5:
+      sub_rm32_imm8(emu, &modrm);
+      break;
+    case 7:
+      cmp_rm32_imm8(emu, &modrm);
+      break;
+    default:
+      printf("not implemented: 83 /%d\n", modrm.opecode);
+      exit(1);
+  }
+}
+
+/* 0x89 */
+static void mov_rm32_r32(Emulator* emu)
+{
+  emu->eip += 1;
+  ModRM modrm;
+  parse_modrm(emu, &modrm);
+  uint32_t r32 = get_r32(emu, &modrm);
+  set_rm32(emu, &modrm, r32);
+}
+
+/* 0x8B */
+static void mov_r32_rm32(Emulator* emu)
+{
+  emu->eip += 1;
+  ModRM modrm;
+  parse_modrm(emu, &modrm);
+  uint32_t rm32 = get_rm32(emu, &modrm);
+  set_r32(emu, &modrm, rm32);
+}
+
+/* 0x90 */
+static void nop(Emulator* emu)
+{
+  emu->eip += 1;
+}
+
+/* 0xB8 /r */
+static void mov_r32_imm32(Emulator* emu)
+{
+  uint8_t reg = get_code8(emu, 0) - 0xB8;
+  uint32_t value = get_code32(emu, 1);
+  emu->registers[reg] = value;
+  emu->eip += 5;
+}
+
+/* 0xC3 */
+static void ret(Emulator* emu)
+{
+  emu->eip = pop32(emu);
+}
+
+/* 0xC7 */
+static void mov_rm32_imm32(Emulator* emu)
+{
+  emu->eip += 1;
+  ModRM modrm;
+  parse_modrm(emu, &modrm);
+  uint32_t value = get_code32(emu, 0);
+  emu->eip += 4;
+  set_rm32(emu, &modrm, value);
+}
+
+/* 0xC9 */
+static void leave(Emulator* emu) {
+  uint32_t ebp = get_register32(emu, EBP);
+  set_register32(emu, ESP, ebp);
+  set_register32(emu, EBP, pop32(emu));
+  emu->eip += 1;
+}
+
+/* 0xE8 */
+static void call_rel32(Emulator* emu)
+{
+  int32_t diff = get_sign_code32(emu, 1);
+  push32(emu, emu->eip + 5);
+  emu->eip += (diff + 5);
+}
+
+/* 0xE9 */
+static void near_jump(Emulator* emu)
+{
+  int32_t diff = get_sign_code32(emu, 1);
+  emu->eip += (diff + 5);
+}
+
+/* 0xEB */
+static void short_jump(Emulator* emu)
+{
+  int8_t diff = get_sign_code8(emu, 1);
+  /* eipに足しこむ．2はjmp命令分 */
+  emu->eip += (diff + 2);
+}
+
+/* 0xFF /0 */
+static void inc_rm32(Emulator* emu, ModRM* modrm)
+{
+  uint32_t value = get_rm32(emu, modrm);
+  set_rm32(emu, modrm, value + 1);
+}
+
+/* 0xFF /1*/
+static void dec_rm32(Emulator* emu, ModRM* modrm)
+{
+  uint32_t value = get_rm32(emu, modrm);
+  set_rm32(emu, modrm, value - 1);
+}
+
+/* 0xFF /6 (ver3.7時点自己実装) */
+static void push_rm32(Emulator* emu, ModRM* modrm)
+{
+  uint32_t rm32 = get_rm32(emu, modrm);
+  push32(emu, rm32);
+}
+
 static void code_ff(Emulator* emu)
 {
   emu->eip += 1;
@@ -276,11 +284,6 @@ static void code_ff(Emulator* emu)
       printf("not implemented: FF /%d\n", modrm.opecode);
       exit(1);
   }
-}
-
-static void nop(Emulator* emu)
-{
-  emu->eip += 1;
 }
 
 /* 関数ポインタテーブル */
