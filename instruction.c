@@ -6,6 +6,7 @@
 #include "instruction.h"
 #include "emulator.h"
 #include "emulator_function.h"
+#include "io.h"
 
 #include "modrm.h"
 
@@ -243,6 +244,24 @@ static void short_jump(Emulator* emu)
   emu->eip += (diff + 2);
 }
 
+/* 0xEC */
+static void in_al_dx(Emulator* emu)
+{
+  uint16_t address = get_register32(emu, EDX) & 0xffff;
+  uint8_t value = io_in8(address);
+  set_register8(emu, AL, value);
+  emu->eip += 1;
+}
+
+/* 0xEE */
+static void out_dx_al(Emulator* emu)
+{
+  uint16_t address = get_register32(emu, EDX) & 0xffff;
+  uint8_t value = get_register8(emu, AL);
+  io_out8(address, value);
+  emu->eip += 1;
+}
+
 /* 0xFF /0 */
 static void inc_rm32(Emulator* emu, ModRM* modrm)
 {
@@ -292,7 +311,6 @@ void init_instructions(void)
   int i;
   memset(instructions, 0, sizeof(instructions));
   instructions[0x01] = add_rm32_r32;
-
   instructions[0x29] = sub_rm32_r32;
   instructions[0x3B] = cmp_r32_rm32;
 
@@ -335,5 +353,8 @@ void init_instructions(void)
   instructions[0xE8] = call_rel32;
   instructions[0xE9] = near_jump;
   instructions[0xEB] = short_jump;
+  instructions[0xEC] = in_al_dx;
+  instructions[0xEE] = out_dx_al;
+
   instructions[0xFF] = code_ff;
 }

@@ -2,13 +2,15 @@
 
 binary_name = program
 
-px86: modrm.o emulator_function.o instruction.o main.c
-	cc -o px86 modrm.o emulator_function.o instruction.o main.c
-	rm modrm.o emulator_function.o instruction.o
+px86: modrm.o io.o emulator_function.o instruction.o main.c
+	cc -o px86 modrm.o io.o emulator_function.o instruction.o main.c
+	rm modrm.o io.o emulator_function.o instruction.o
 emulator_function.o: emulator_function.h emulator_function.c
 	cc -c emulator_function.c
 instruction.o: instruction.h instruction.c modrm.o
 	cc -c instruction.c
+io.o: io.h io.c
+	cc -c io.c
 modrm.o: modrm.c
 	cc -c modrm.c
 
