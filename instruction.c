@@ -171,6 +171,16 @@ static void code_83(Emulator* emu)
   }
 }
 
+/* 0x88 */
+static void mov_rm8_r8(Emulator* emu)
+{
+  emu->eip += 1;
+  ModRM modrm;
+  parse_modrm(emu, &modrm);
+  uint32_t r8 = get_r8(emu, &modrm);
+  set_rm8(emu, &modrm, r8);
+}
+
 /* 0x89 */
 static void mov_rm32_r32(Emulator* emu)
 {
@@ -179,6 +189,16 @@ static void mov_rm32_r32(Emulator* emu)
   parse_modrm(emu, &modrm);
   uint32_t r32 = get_r32(emu, &modrm);
   set_rm32(emu, &modrm, r32);
+}
+
+/* 0x8A */
+static void mov_r8_rm8(Emulator* emu)
+{
+  emu->eip += 1;
+  ModRM modrm;
+  parse_modrm(emu, &modrm);
+  uint32_t rm8 = get_rm8(emu, &modrm);
+  set_r8(emu, &modrm, rm8);
 }
 
 /* 0x8B */
@@ -357,7 +377,9 @@ void init_instructions(void)
   instructions[0x7E] = jle;
 
   instructions[0x83] = code_83;
+  instructions[0x88] = mov_rm8_r8;
   instructions[0x89] = mov_rm32_r32;
+  instructions[0x8A] = mov_r8_rm8;
   instructions[0x8B] = mov_r32_rm32;
 
   instructions[0x90] = nop;

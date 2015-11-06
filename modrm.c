@@ -101,6 +101,16 @@ uint32_t calc_memory_address(Emulator* emu, ModRM* modrm)
   }
 }
 
+uint8_t get_rm8(Emulator* emu, ModRM* modrm)
+{
+  if (modrm->mod == 3) {
+    return get_register8(emu, modrm->rm);
+  } else {
+    uint32_t address = calc_memory_address(emu, modrm);
+    return get_memory8(emu, address);
+  }
+}
+
 uint32_t get_rm32(Emulator* emu, ModRM* modrm)
 {
   if (modrm->mod == 3) {
@@ -108,6 +118,16 @@ uint32_t get_rm32(Emulator* emu, ModRM* modrm)
   } else {
     uint32_t address = calc_memory_address(emu, modrm);
     return get_memory32(emu, address);
+  }
+}
+
+void set_rm8(Emulator* emu, ModRM* modrm, uint8_t value)
+{
+  if (modrm->mod == 3) {
+    set_register8(emu, modrm->rm, value);
+  } else {
+    uint32_t address = calc_memory_address(emu, modrm);
+    set_memory8(emu, address, value);
   }
 }
 
@@ -121,9 +141,19 @@ void set_rm32(Emulator* emu, ModRM* modrm, uint32_t value)
   }
 }
 
+uint8_t get_r8(Emulator* emu, ModRM* modrm)
+{
+  return get_register8(emu, modrm->reg_index);
+}
+
 uint32_t get_r32(Emulator* emu, ModRM* modrm)
 {
   return get_register32(emu, modrm->reg_index);
+}
+
+void set_r8(Emulator* emu, ModRM* modrm, uint8_t value)
+{
+  set_register8(emu, modrm->reg_index, value);
 }
 
 void set_r32(Emulator* emu, ModRM* modrm, uint32_t value)
