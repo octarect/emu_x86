@@ -20,6 +20,23 @@ char* registers_name[] = {
   "EAX", "ECX", "EDX", "EBX", "ESP", "EBP", "ESI", "EDI"
 };
 
+/* Emulatorのメモリにバイナリファイルの内容を512バイトコピーする */
+static void read_binary(Emulator* emu, const char* filename)
+{
+  FILE* binary;
+
+  binary = fopen(filename, "rb");
+
+  if (binary == NULL) {
+    printf("%sファイルが開けません\n", filename);
+    exit(1);
+  }
+
+  /* 機械語ファイルを読み込む(最大512B) */
+  fread(emu->memory + PROGRAM_ORIGIN, 1, 0x200, binary);
+  fclose(binary);
+}
+
 /* 汎用レジスタとプログラムカウンタの値を標準出力に出力する */
 static void dump_registers(Emulator* emu)
 {
@@ -66,35 +83,59 @@ void destroy_emu(Emulator* emu)
   free(emu);
 }
 
+/* エミュレータを確保する */
+int opt_remove_at(int argc, char* argv[], int index)
+{
+  if (index < 0 || argc <= index) {
+    return argc;
+  } else {
+    int i = index;
+    for (; i < argc - 1; i++) {
+      argv[i] = argv[i + 1];
+    }
+    argv[i] = NULL;
+    return argc - 1;
+  }
+}
+
 int main(int argc, char* argv[])
 {
-  FILE* binary;
   Emulator* emu;
+  int i;
+  int quiet = 0;
 
+  i = 1;
+  while (i < argc) {
+    if (strcmp(argv[i], "-q") == 0) {
+      quiet = 1;
+      argc = opt_remove_at(argc, argv, i);
+    } else {
+      i++;
+    }
+  }
+
+  /* 引数が1つでなければエラー */
   if (argc != 2) {
     printf("usage: px86 filename\n");
     return 1;
   }
 
+  /* 命令セットの初期化 */
+  init_instructions();
+
   /* エミュレータを作る. EIPとESPも引数にて指定 */
   emu = create_emu(MEMORY_SIZE, PROGRAM_ORIGIN, STACK_BASE);
 
-  binary = fopen(argv[1], "rb");
-  if (binary == NULL) {
-    printf("%sファイルが開けません\n", argv[1]);
-    return 1;
-  }
-
-  /* 機械語ファイルを読み込む(最大512B) */
-  fread(emu->memory + PROGRAM_ORIGIN, 1, 0x200, binary);
-  fclose(binary);
-
-  init_instructions();
+  /* 引数で与えられたバイナリを読み込む */
+  read_binary(emu, argv[1]);
 
   while (emu->eip < MEMORY_SIZE) {
     uint8_t code = get_code8(emu, 0);
+
     /* 現在のプログラムカウンタと実行されるバイナリを出力する */
-    printf("EIP = %X, Code = %02X\n", emu->eip, code);
+    if (!quiet) {
+      printf("EIP = %X, Code = %02X\n", emu->eip, code);
+    }
 
     if (instructions[code] == NULL) {
       printf("\n\nNot Implemented: %x\n", code);
