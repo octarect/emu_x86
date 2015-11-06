@@ -56,6 +56,16 @@ static void cmp_al_imm8(Emulator* emu)
   emu->eip += 2;
 }
 
+/* 0x3D */
+static void cmp_eax_imm32(Emulator* emu)
+{
+    uint32_t value = get_code32(emu, 1);
+    uint32_t eax = get_register32(emu, EAX);
+    uint64_t result = (uint64_t)eax - (uint64_t)value;
+    update_eflags_sub(emu, eax, value, result);
+    emu->eip += 5;
+}
+
 /* 0x40 /r */
 static void inc_r32(Emulator* emu)
 {
@@ -360,6 +370,7 @@ void init_instructions(void)
   instructions[0x29] = sub_rm32_r32;
   instructions[0x3B] = cmp_r32_rm32;
   instructions[0x3C] = cmp_al_imm8;
+  instructions[0x3D] = cmp_eax_imm32;
 
   for (i = 0; i < 8; i++) {
     instructions[0x40 + i] = inc_r32;
