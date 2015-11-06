@@ -1,7 +1,7 @@
 BITS 32
   org 0x7c00
 start:
-  mov edx, 0x3f8
+  mov edx, 0x03f8
 mainloop:
   mov al, '>'
   out dx, al
@@ -11,6 +11,8 @@ input:
   je puthello
   cmp al, 'w'
   je putworld
+  cmp al, 'q'
+  je fin
   jmp input
 puthello:
   mov esi, msghello
@@ -35,6 +37,6 @@ putsend:
   ret
 
 msghello:
-  db "hello", 0x0d, 0x04, 0
+  db "hello", 0x0d, 0x0a, 0
 msgworld:
   db "world", 0x0d, 0x0a, 0
