@@ -187,12 +187,21 @@ static void nop(Emulator* emu)
   emu->eip += 1;
 }
 
+/* 0xB0 /r */
+static void mov_r8_imm8(Emulator* emu)
+{
+  uint8_t reg = get_code8(emu, 0) - 0xB0;
+  uint8_t value = get_code8(emu, 1);
+  set_register8(emu, reg, get_code8(emu, 1));
+  emu->eip += 2;
+}
+
 /* 0xB8 /r */
 static void mov_r32_imm32(Emulator* emu)
 {
   uint8_t reg = get_code8(emu, 0) - 0xB8;
   uint32_t value = get_code32(emu, 1);
-  emu->registers[reg] = value;
+  set_register32(emu, reg, value);
   emu->eip += 5;
 }
 
@@ -341,6 +350,10 @@ void init_instructions(void)
   instructions[0x8B] = mov_r32_rm32;
 
   instructions[0x90] = nop;
+
+  for (i = 0; i < 8; i++) {
+    instructions[0xB0 + i] = mov_r8_imm8;
+  }
 
   for (i = 0; i < 8; i++) {
     instructions[0xB8 + i] = mov_r32_imm32;
