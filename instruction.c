@@ -56,6 +56,14 @@ static void cmp_al_imm8(Emulator* emu)
   emu->eip += 2;
 }
 
+/* 0x40 /r */
+static void inc_r32(Emulator* emu)
+{
+  uint8_t reg = get_code8(emu, 0) - 0x40;
+  set_register32(emu, reg, get_register32(emu, reg) + 1);
+  emu->eip += 1;
+}
+
 /* 0x50 /r */
 static void push_r32(Emulator* emu)
 {
@@ -221,7 +229,6 @@ static void nop(Emulator* emu)
 static void mov_r8_imm8(Emulator* emu)
 {
   uint8_t reg = get_code8(emu, 0) - 0xB0;
-  uint8_t value = get_code8(emu, 1);
   set_register8(emu, reg, get_code8(emu, 1));
   emu->eip += 2;
 }
@@ -353,6 +360,10 @@ void init_instructions(void)
   instructions[0x29] = sub_rm32_r32;
   instructions[0x3B] = cmp_r32_rm32;
   instructions[0x3C] = cmp_al_imm8;
+
+  for (i = 0; i < 8; i++) {
+    instructions[0x40 + i] = inc_r32;
+  }
 
   for (i = 0; i < 8; i++) {
     instructions[0x50 + i] = push_r32;
