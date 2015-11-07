@@ -8,7 +8,7 @@
 #include "modrm.h"
 #include "emulator_function.h"
 
-void parse_modrm(Emulator* emu, ModRM* modrm)
+void parse_modrm(Emulator* emu, ModRM* modrm, uint8_t nosib)
 {
   uint8_t code;
 
@@ -23,7 +23,7 @@ void parse_modrm(Emulator* emu, ModRM* modrm)
 
   emu->eip += 1;
 
-  if (modrm->mod != 3 && modrm->rm == 4) {
+  if (modrm->mod != 3 && modrm->rm == 4 && !nosib) {
     modrm->sib = get_code8(emu, 0);
     emu->eip += 1;
   }

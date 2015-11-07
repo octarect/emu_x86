@@ -27,7 +27,7 @@ typedef struct {
 } ModRM;
 
 /* ModRM, SIB, ディスプレースメントを解析する */
-void parse_modrm(Emulator* emu, ModRM* modrm);
+void parse_modrm(Emulator* emu, ModRM* modrm, uint8_t nosib);
 
 /* ModRMの内容に基づきメモリの実効アドレスを計算する */
 uint32_t calc_memory_address(Emulator* emu, ModRM* modrm);
