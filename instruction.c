@@ -17,7 +17,7 @@ static void add_rm32_r32(Emulator* emu)
 {
   emu->eip += 1;
   ModRM modrm;
-  parse_modrm(emu, &modrm, 0);
+  parse_modrm32(emu, &modrm);
   uint32_t r32 = get_r32(emu, &modrm);
   uint32_t rm32 = get_rm32(emu, &modrm);
   set_rm32(emu, &modrm, rm32 + r32);
@@ -32,12 +32,37 @@ static void add_al_imm8(Emulator* emu)
   emu->eip += 2;
 }
 
+/* 0x0FAF /r */
+static void imul_r32_rm32(Emulator* emu)
+{
+  emu->eip += 1;
+  ModRM modrm;
+  parse_modrm32(emu, &modrm);
+  uint32_t r32 = get_r32(emu, &modrm);
+  uint32_t rm32 = get_rm32(emu, &modrm);
+  set_r32(emu, &modrm, r32 * rm32);
+}
+
+static void code_0f(Emulator* emu)
+{
+  emu->eip += 1;
+  uint8_t second_code = get_code8(emu, 0);
+  switch (second_code) {
+    case 0xAF:
+      imul_r32_rm32(emu);
+      break;
+    default:
+      printf("Not implemented:0F%02X\n", second_code);
+      exit(1);
+  }
+}
+
 /* 0x29 */
 static void sub_rm32_r32(Emulator* emu)
 {
   emu->eip += 1;
   ModRM modrm;
-  parse_modrm(emu, &modrm, 0);
+  parse_modrm32(emu, &modrm);
   uint32_t rm32 = get_rm32(emu, &modrm);
   uint32_t r32 = get_r32(emu, &modrm);
   set_rm32(emu, &modrm, rm32 - r32);
@@ -48,7 +73,7 @@ static void cmp_r32_rm32(Emulator* emu)
 {
   emu->eip += 1;
   ModRM modrm;
-  parse_modrm(emu, &modrm, 0);
+  parse_modrm32(emu, &modrm);
   uint32_t r32 = get_r32(emu, &modrm);
   uint32_t rm32 = get_rm32(emu, &modrm);
   uint64_t result = (uint64_t)r32 - (uint64_t)rm32;
@@ -186,7 +211,7 @@ static void code_83(Emulator* emu)
 {
   emu->eip += 1;
   ModRM modrm;
-  parse_modrm(emu, &modrm, 0);
+  parse_modrm32(emu, &modrm);
 
   switch (modrm.opecode) {
     case 0:
@@ -209,7 +234,7 @@ static void mov_rm8_r8(Emulator* emu)
 {
   emu->eip += 1;
   ModRM modrm;
-  parse_modrm(emu, &modrm, 0);
+  parse_modrm32(emu, &modrm);
   uint32_t r8 = get_r8(emu, &modrm);
   set_rm8(emu, &modrm, r8);
 }
@@ -219,7 +244,7 @@ static void mov_rm32_r32(Emulator* emu)
 {
   emu->eip += 1;
   ModRM modrm;
-  parse_modrm(emu, &modrm, 0);
+  parse_modrm32(emu, &modrm);
   uint32_t r32 = get_r32(emu, &modrm);
   set_rm32(emu, &modrm, r32);
 }
@@ -229,7 +254,7 @@ static void mov_r8_rm8(Emulator* emu)
 {
   emu->eip += 1;
   ModRM modrm;
-  parse_modrm(emu, &modrm, 0);
+  parse_modrm32(emu, &modrm);
   uint32_t rm8 = get_rm8(emu, &modrm);
   set_r8(emu, &modrm, rm8);
 }
@@ -239,19 +264,20 @@ static void mov_r32_rm32(Emulator* emu)
 {
   emu->eip += 1;
   ModRM modrm;
-  parse_modrm(emu, &modrm, 0);
+  parse_modrm32(emu, &modrm);
   uint32_t rm32 = get_rm32(emu, &modrm);
   set_r32(emu, &modrm, rm32);
 }
 
 /* 0x8D */
-static void lea_r32_m(Emulator* emu)
+static void lea_r16_m(Emulator* emu)
 {
   emu->eip += 1;
   ModRM modrm;
-  parse_modrm(emu, &modrm, 1);
-  uint32_t address = calc_memory_address(emu, &modrm);
-  set_r32(emu, &modrm, address);
+  parse_modrm16(emu, &modrm);
+  uint32_t address = calc_memory_address16(emu, &modrm);
+  printf("addr=%08X\n", address);
+  set_r16(emu, &modrm, address);
 }
 
 /* 0x90 */
@@ -288,7 +314,7 @@ static void mov_rm32_imm32(Emulator* emu)
 {
   emu->eip += 1;
   ModRM modrm;
-  parse_modrm(emu, &modrm, 0);
+  parse_modrm32(emu, &modrm);
   uint32_t value = get_code32(emu, 0);
   emu->eip += 4;
   set_rm32(emu, &modrm, value);
@@ -377,7 +403,7 @@ static void code_ff(Emulator* emu)
 {
   emu->eip += 1;
   ModRM modrm;
-  parse_modrm(emu, &modrm, 0);
+  parse_modrm32(emu, &modrm);
 
   switch (modrm.opecode) {
     case 0:
@@ -402,6 +428,7 @@ void init_instructions(void)
   memset(instructions, 0, sizeof(instructions));
   instructions[0x01] = add_rm32_r32;
   instructions[0x04] = add_al_imm8;
+  instructions[0x0F] = code_0f;
   instructions[0x29] = sub_rm32_r32;
   instructions[0x3B] = cmp_r32_rm32;
   instructions[0x3C] = cmp_al_imm8;
@@ -439,7 +466,7 @@ void init_instructions(void)
   instructions[0x89] = mov_rm32_r32;
   instructions[0x8A] = mov_r8_rm8;
   instructions[0x8B] = mov_r32_rm32;
-  instructions[0x8D] = lea_r32_m;
+  instructions[0x8D] = lea_r16_m;
 
   instructions[0x90] = nop;
 

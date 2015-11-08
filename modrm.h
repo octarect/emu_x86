@@ -28,13 +28,14 @@ typedef struct {
 } ModRM;
 
 /* ModRM, SIB, ディスプレースメントを解析する */
-void parse_modrm(Emulator* emu, ModRM* modrm, uint8_t nosib);
+void parse_modrm32(Emulator* emu, ModRM* modrm);
 
 /* ModRM解析16bit版 */
 void parse_modrm16(Emulator* emu, ModRM* modrm);
 
 /* ModRMの内容に基づきメモリの実効アドレスを計算する */
-uint32_t calc_memory_address(Emulator* emu, ModRM* modrm);
+uint32_t calc_memory_address16(Emulator* emu, ModRM* modrm);
+uint32_t calc_memory_address32(Emulator* emu, ModRM* modrm);
 
 /* メモリ/レジスタアクセッサ 32bit版 */
 uint32_t get_rm32(Emulator* emu, ModRM* modrm);
