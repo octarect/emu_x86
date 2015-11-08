@@ -22,6 +22,7 @@ typedef struct {
 
   union {
     int8_t disp8; /* disp8は符号付き整数 */
+    int16_t disp16;
     uint32_t disp32;
   };
 } ModRM;
@@ -29,19 +30,16 @@ typedef struct {
 /* ModRM, SIB, ディスプレースメントを解析する */
 void parse_modrm(Emulator* emu, ModRM* modrm, uint8_t nosib);
 
+/* ModRM解析16bit版 */
+void parse_modrm16(Emulator* emu, ModRM* modrm);
+
 /* ModRMの内容に基づきメモリの実効アドレスを計算する */
 uint32_t calc_memory_address(Emulator* emu, ModRM* modrm);
 
-/* rm32のレジスタまたはメモリの32bit値を取得する */
+/* メモリ/レジスタアクセッサ 32bit版 */
 uint32_t get_rm32(Emulator* emu, ModRM* modrm);
-
-/* rm32レジスタまたはメモリの32bit値を取得する */
 void set_rm32(Emulator* emu, ModRM* modrm, uint32_t value);
-
-/* r32のレジスタの32bit値を取得する */
 uint32_t get_r32(Emulator* emu, ModRM* modrm);
-
-/* r32のレジスタの32bit値を設定する */
 void set_r32(Emulator* emu, ModRM* modrm, uint32_t value);
 
 /* 8ビット版 */
@@ -49,5 +47,12 @@ uint8_t get_rm8(Emulator* emu, ModRM* modrm);
 void set_rm8(Emulator* emu, ModRM* modrm, uint8_t value);
 uint8_t get_r8(Emulator* emu, ModRM* modrm);
 void set_r8(Emulator* emu, ModRM* modrm, uint8_t value);
+
+/* 16ビット版 */
+uint16_t get_rm16(Emulator* emu, ModRM* modrm);
+void set_rm16(Emulator* emu, ModRM* modrm, uint16_t value);
+uint16_t get_r16(Emulator* emu, ModRM* modrm);
+void set_r16(Emulator* emu, ModRM* modrm, uint16_t value);
+
 
 #endif

@@ -5,7 +5,9 @@
 
 enum Register { EAX, ECX, EDX, EBX, ESP, EBP, ESI, EDI, REGISTERS_COUNT,
   AL = EAX, CL = ECX, DL = EDX, BL = EBX,
-  AH = AL + 4, CH = CL + 4, DH = DL + 4, BH = BL + 4 };
+  AH = AL + 4, CH = CL + 4, DH = DL + 4, BH = BL + 4,
+  AX = EAX, CX = ECX, DX = EDX, BX = EBX,
+  SP = ESP, BP = EBP, SI = ESI, DI = ESI };
 
 typedef struct {
   /* 汎用レジスタ */
