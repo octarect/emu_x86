@@ -145,10 +145,6 @@ int main(int argc, char* argv[])
     /* 命令の実行 */
     instructions[code](emu);
 
-    printf("BX=%08X, DI=%08X, SP=%08X\n", get_register16(emu, BX), get_register16(emu, DI),
-      get_register16(emu, SP));
-    printf("ESP=%X\n", emu->registers[ESP]);
-
     /* EIPが0になったらプログラム終了 */
     if (emu->eip == 0x00) {
       printf("\n\nend of program.\n\n");

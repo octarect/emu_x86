@@ -276,8 +276,7 @@ static void lea_r16_m(Emulator* emu)
   ModRM modrm;
   parse_modrm16(emu, &modrm);
   uint32_t address = calc_memory_address16(emu, &modrm);
-  printf("addr=%08X\n", address);
-  set_r16(emu, &modrm, address);
+  set_r16(emu, &modrm, (uint16_t)address);
 }
 
 /* 0x90 */
