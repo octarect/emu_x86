@@ -8,5 +8,5 @@ int fib(int n)
 
 int main(void)
 {
-  return fib(*a);
+  return fib(5);
 }
