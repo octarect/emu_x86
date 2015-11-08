@@ -306,7 +306,6 @@ static void leave(Emulator* emu) {
 static void in_al_imm8(Emulator* emu)
 {
   uint16_t address = (uint16_t)get_code8(emu, 1);
-  printf("%d\n", address);
   uint8_t value = io_in8(address);
   set_register8(emu, AL, value);
   emu->eip += 2;
