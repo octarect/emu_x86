@@ -66,8 +66,8 @@ uint32_t eval_sib(Emulator* emu, ModRM* modrm)
 {
   uint8_t sib = modrm->sib;
   uint8_t scale = ((sib & 0xC0) >> 6);
-  uint8_t base  = ((sib & 0x38) >> 3);
-  uint8_t index = (sib & 0x03);
+  uint8_t index  = ((sib & 0x38) >> 3);
+  uint8_t base = (sib & 0x07);
   uint32_t r32b, r32i;
 
   if (base == 5) {
@@ -83,7 +83,7 @@ uint32_t eval_sib(Emulator* emu, ModRM* modrm)
   }
 
   if (scale == 0) {
-    return r32b;
+    return r32b + r32i;
   } else if (scale == 1) {
     return r32b + r32i * 2;
   } else if (scale == 2) {
